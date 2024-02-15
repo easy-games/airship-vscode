@@ -113,16 +113,14 @@
 				},
 				"airship.colorPicker.defaultOption": {
 					"type": "string",
-					"default": "fromRGB",
+					"default": "new",
 					"enum": [
-						"fromRGB",
-						"fromHSV",
-						"new"
+						"new",
+						"hsvToRGB"
 					],
 					"enumDescriptions": [
-						"Use Color3.fromRGB() as the default in the color picker",
-						"Use Color3.fromHSV() as the default in the color picker",
-						"Use new Color3() as the default in the color picker"
+						"Use new Color() as the default in the color picker",
+						"Use Color.HSVToRGB as the default in the color picker"
 					]
 				},
 				"airship.openOutputToSide": {

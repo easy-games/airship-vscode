@@ -1,58 +1,48 @@
-import * as vscode from 'vscode';
-import { ColorArray, colorTo, ColorType, roundColor } from './util/colorMap';
+import * as vscode from "vscode";
+import { ColorRGBA, colorTo, ColorType, roundColor } from "./util/colorMap";
 
-/**
- * Matching:
- * ```
- * new Color3( 0.1, 0.2, 0.3 );
- * ----------  ---  ---  ---
- *           --   --   --   --
- * 1         2 3  4 5  6 7  8
- * ```
- */
 const matchColors: Record<ColorType, RegExp> = {
-	[ColorType.new]: /(new\s+Color)(\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
-	[ColorType.hsvToRGB]: /(Color\s*\.HSVToRGB)(\s*\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
+	[ColorType.new]:
+		/(new\s+Color)\(\s*(\d*(?:\.\d*)?),\s*(\d*(?:\.\d*)?)\s*,\s*(\d*(?:\.\d*)?)(?:\s*,\s*(\d*(?:\.\d*)?))?\s*\)/,
+	[ColorType.hsvToRGB]: /(Color\.HSVToRGB)\(\s*(\d*(?:\.\d*)?),\s*(\d*(?:\.\d*)?)\s*,\s*(\d*(?:\.\d*)?)(?:\s*)\)/,
 };
 
 const matchPrefix: Record<ColorType, string> = {
-	[ColorType.new]: 'new Color',
-	[ColorType.hsvToRGB]: 'Color.HSVToRGB',
+	[ColorType.new]: "new Color",
+	[ColorType.hsvToRGB]: "Color.HSVToRGB",
 };
 
-function formatNumber(match: ColorType, a: number, b: number, c: number): vscode.Color {
+function formatNumber(match: ColorType, a: number, b: number, c: number, d: number = 1): vscode.Color {
 	if (match === ColorType.new) {
 		return {
-			alpha: 1,
+			alpha: d,
 			red: a,
 			green: b,
-			blue: c
+			blue: c,
 		};
 	}
 
-	const [red, green, blue] = colorTo[match][ColorType.new](a, b, c);
+	const [red, green, blue] = colorTo[match][ColorType.new](a, b, c, d ?? 1);
 
 	return {
-		alpha: 1,
+		alpha: d,
 		red,
 		green,
-		blue
+		blue,
 	};
 }
 
-function replaceMatch(match: RegExpMatchArray, group: string, a: number | string, b: number | string, c: number | string) {
-	return `${group}${match[2]}${a}${match[4]}${b}${match[6]}${c}${match[8]}`;
-}
-
-function extractTriColor(match: RegExpMatchArray): ColorArray {
-	return [Number(match[3]), Number(match[5]), Number(match[7])];
+function extractRGBA(match: RegExpMatchArray): ColorRGBA {
+	return [Number(match[2]), Number(match[3]), Number(match[4]), match[5] !== undefined ? Number(match[5]) : 1];
 }
 
 function getRotatedColorType() {
-	const defaultColorType = vscode.workspace.getConfiguration("roblox-ts.colorPicker").get("defaultOption", ColorType.new);
+	const defaultColorType = vscode.workspace
+		.getConfiguration("roblox-ts.colorPicker")
+		.get("defaultOption", ColorType.new);
 
 	const rotatingArray = Object.values(ColorType);
-	const location = rotatingArray.findIndex(value => value === defaultColorType);
+	const location = rotatingArray.findIndex((value) => value === defaultColorType);
 
 	rotatingArray.unshift(...rotatingArray.splice(location, rotatingArray.length));
 	return rotatingArray;
@@ -63,20 +53,36 @@ export function makeColorProvider() {
 		provideColorPresentations: (color, context, token) => {
 			const text = context.document.getText(context.range);
 
-			const match = Object.values(ColorType).find(match => text.includes(match));
-			if (!match) throw new Error('Color type specified was not found!');
+			const match = Object.values(ColorType).find((match) => text.includes(match));
+			if (!match) throw new Error("Color type specified was not found!");
 
 			const regexMatch = text.match(matchColors[match])!;
 
-			const matches: vscode.ProviderResult<Array<vscode.ColorPresentation>> = getRotatedColorType().map((matchType): vscode.ColorPresentation => {
-				const colorMatch = matchType === ColorType.new
-					? [color.red, color.green, color.blue] as const
-					: colorTo[ColorType.new][matchType](...roundColor([color.red, color.green, color.blue]));
+			const matches: vscode.ProviderResult<Array<vscode.ColorPresentation>> = getRotatedColorType().map(
+				(matchType): vscode.ColorPresentation => {
+					const colorMatch =
+						matchType === ColorType.new
+							? ([color.red, color.green, color.blue, color.alpha] as ColorRGBA)
+							: colorTo[ColorType.new][matchType](
+									...roundColor([color.red, color.green, color.blue, color.alpha]),
+							  );
 
-				return {
-					label: replaceMatch(regexMatch, matchPrefix[matchType],...roundColor(colorMatch))
-				};
-			});
+					if (matchType === ColorType.hsvToRGB) {
+						const [h, s, v] = roundColor(colorMatch);
+						return {
+							label: `${matchPrefix[matchType]}(${h}, ${s}, ${v})`,
+						};
+					} else {
+						const [r, g, b, a] = roundColor([color.red, color.green, color.blue, color.alpha]);
+						return {
+							label:
+								color.alpha !== 1
+									? `${matchPrefix[matchType]}(${r}, ${g}, ${b}, ${a})`
+									: `${matchPrefix[matchType]}(${r}, ${g}, ${b})`,
+						};
+					}
+				},
+			);
 
 			return matches;
 		},
@@ -86,23 +92,23 @@ export function makeColorProvider() {
 			const result: vscode.ProviderResult<vscode.ColorInformation[]> = [];
 
 			for (const [matchType, matchRegex] of Object.entries(matchColors)) {
-				for (const match of source.matchAll(new RegExp(matchRegex, 'g'))) {
+				for (const match of source.matchAll(new RegExp(matchRegex, "g"))) {
 					result.push({
-						color: formatNumber(matchType as ColorType, ...extractTriColor(match)),
+						color: formatNumber(matchType as ColorType, ...extractRGBA(match)),
 						range: new vscode.Range(
 							document.positionAt(match.index!),
-							document.positionAt(match.index! + match[0].length)
-						)
+							document.positionAt(match.index! + match[0].length),
+						),
 					});
 				}
 			}
 
 			return result;
-		}
+		},
 	};
 
 	return [
-		vscode.languages.registerColorProvider('typescript', provider),
-		vscode.languages.registerColorProvider('typescriptreact', provider)
+		vscode.languages.registerColorProvider("typescript", provider),
+		vscode.languages.registerColorProvider("typescriptreact", provider),
 	];
 }
