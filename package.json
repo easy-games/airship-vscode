@@ -47,9 +47,21 @@
 				"command": "airship.stop",
 				"title": "Stop Compiler",
 				"category": "Airship"
+			},
+			{
+				"command": "airship.create-component",
+				"title": "New Airship Component...",
+				"category": "Airship"
 			}
 		],
 		"menus": {
+			"explorer/context": [
+				{
+					"command": "airship.create-component",
+					"when": "explorerResourceIsFolder",
+					"group": "navigation"
+				}
+			],
 			"commandPalette": [
 				{
 					"command": "airship.openOutput",
