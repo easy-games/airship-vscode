@@ -58,8 +58,8 @@
 			"explorer/context": [
 				{
 					"command": "airship.create-component",
-					"when": "explorerResourceIsFolder",
-					"group": "navigation"
+					"when": "explorerResourceIsFolder && resourceDirname =~ /src/i",
+					"group": "Airship"
 				}
 			],
 			"commandPalette": [

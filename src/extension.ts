@@ -10,6 +10,7 @@ import { isPathInSrc } from "./util/isPathInSrc";
 import { PathTranslator } from "./util/PathTranslator";
 import { showErrorMessage } from "./util/showMessage";
 import { VirtualTerminal } from "./VirtualTerminal";
+import { registerAirshipComponentFeatures } from "./airshipComponents";
 
 export async function activate(context: vscode.ExtensionContext) {
 	// Retrieve a reference to vscode's typescript extension.
@@ -187,46 +188,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("airship.openOutput", openOutput));
 	context.subscriptions.push(vscode.commands.registerCommand("airship.start", startCompiler));
 	context.subscriptions.push(vscode.commands.registerCommand("airship.stop", stopCompiler));
-	context.subscriptions.push(
-		vscode.commands.registerCommand("airship.create-component", async (...args) => {
-			if (args.length > 0 && args[0] instanceof vscode.Uri) {
-				const [uri] = args;
-				const fileName = await vscode.window.showInputBox({
-					prompt: "Enter a name for the component",
-				});
-
-				if (!fileName) return;
-
-				if (/(^[A-z0-9\.-]+$)/g.test(fileName)) {
-					console.log(fileName, "was the file name");
-
-					const fileToCreate = path.join(uri.fsPath, `${fileName}.ts`);
-
-					const template = new vscode.SnippetString(
-						"export default class ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g} extends AirshipBehaviour {\n" +
-							"\toverride Start(): void {\n" +
-							"\t\t${0}\n" +
-							"\t}\n" +
-							"\n" +
-							"\toverride OnDestroy(): void {}\n" +
-							"}\n" +
-							"",
-					);
-
-					fs.writeFileSync(fileToCreate, "");
-
-					const document = await vscode.workspace.openTextDocument(fileToCreate);
-					const editor = await vscode.window.showTextDocument(document);
-					editor.insertSnippet(template, new vscode.Position(0, 0));
-					document.save();
-				} else {
-					vscode.window.showErrorMessage(
-						"Could not create Component with name " + fileName + ", it is invalid.",
-					);
-				}
-			}
-		}),
-	);
+	registerAirshipComponentFeatures(context);
 
 	context.subscriptions.push(compileStatusBarItem);
 	context.subscriptions.push(outputChannel);
