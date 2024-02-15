@@ -11,15 +11,13 @@ import { ColorArray, colorTo, ColorType, roundColor } from './util/colorMap';
  * ```
  */
 const matchColors: Record<ColorType, RegExp> = {
-	[ColorType.new]: /(new\s+Color3)(\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
-	[ColorType.fromRGB]: /(Color3\s*\.fromRGB)(\s*\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
-	[ColorType.fromHSV]: /(Color3\s*\.fromHSV)(\s*\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/
+	[ColorType.new]: /(new\s+Color)(\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
+	[ColorType.hsvToRGB]: /(Color\s*\.HSVToRGB)(\s*\(\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*,\s*)(\d*(?:\.\d*)?)(\s*\))/,
 };
 
 const matchPrefix: Record<ColorType, string> = {
-	[ColorType.new]: 'new Color3',
-	[ColorType.fromRGB]: 'Color3.fromRGB',
-	[ColorType.fromHSV]: 'Color3.fromHSV',
+	[ColorType.new]: 'new Color',
+	[ColorType.hsvToRGB]: 'Color.HSVToRGB',
 };
 
 function formatNumber(match: ColorType, a: number, b: number, c: number): vscode.Color {
@@ -51,7 +49,7 @@ function extractTriColor(match: RegExpMatchArray): ColorArray {
 }
 
 function getRotatedColorType() {
-	const defaultColorType = vscode.workspace.getConfiguration("roblox-ts.colorPicker").get("defaultOption", ColorType.fromRGB);
+	const defaultColorType = vscode.workspace.getConfiguration("roblox-ts.colorPicker").get("defaultOption", ColorType.new);
 
 	const rotatingArray = Object.values(ColorType);
 	const location = rotatingArray.findIndex(value => value === defaultColorType);
