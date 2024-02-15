@@ -1,5 +1,5 @@
 {
-	"name": "vscode-airship",
+	"name": "airship-vscode",
 	"publisher": "easy-games",
 	"displayName": "Airship Editor Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
