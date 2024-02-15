@@ -3,7 +3,7 @@
 	"publisher": "easy-games",
 	"displayName": "Airship Editor Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.0.0",
+	"version": "1.0.0-beta.1",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "^1.52.0"
@@ -20,10 +20,16 @@
 		"workspaceContains:node_modules/@easy-games/unity-ts"
 	],
 	"contributes": {
-		"typescriptServerPlugins": [
+		"@@typescriptServerPlugins": [
 			{
 				"name": "@easy-games/airship-typescript-extensions",
 				"enableForWorkspaceTypeScriptVersions": true
+			}
+		],
+		"snippets": [
+			{
+				"language": "typescript",
+				"path": "./snippets/airship.code-snippets"
 			}
 		],
 		"commands": [
