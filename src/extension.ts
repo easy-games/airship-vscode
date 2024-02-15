@@ -1,15 +1,15 @@
-import * as childProcess from 'child_process';
-import * as fs from 'fs';
-import { existsSync } from 'fs';
+import * as childProcess from "child_process";
+import * as fs from "fs";
+import { existsSync } from "fs";
 import * as path from "path";
-import * as treeKill from 'tree-kill';
-import * as vscode from 'vscode';
-import { makeColorProvider } from './colorizePrint';
-import { getCompilerOptionsAtFile } from './util/compilerOptions';
-import { isPathInSrc } from './util/isPathInSrc';
-import { PathTranslator } from './util/PathTranslator';
-import { showErrorMessage } from './util/showMessage';
-import { VirtualTerminal } from './VirtualTerminal';
+import * as treeKill from "tree-kill";
+import * as vscode from "vscode";
+import { makeColorProvider } from "./colorizePrint";
+import { getCompilerOptionsAtFile } from "./util/compilerOptions";
+import { isPathInSrc } from "./util/isPathInSrc";
+import { PathTranslator } from "./util/PathTranslator";
+import { showErrorMessage } from "./util/showMessage";
+import { VirtualTerminal } from "./VirtualTerminal";
 
 export async function activate(context: vscode.ExtensionContext) {
 	// Retrieve a reference to vscode's typescript extension.
@@ -32,19 +32,28 @@ export async function activate(context: vscode.ExtensionContext) {
 	configurePlugin(api);
 
 	// Reconfigure the plugin when vscode settings change.
-	vscode.workspace.onDidChangeConfiguration((e) => {
-		if (e.affectsConfiguration("airship")) {
-			configurePlugin(api);
-			updateStatusButtonVisibility();
-		}
-	}, undefined, context.subscriptions);
+	vscode.workspace.onDidChangeConfiguration(
+		(e) => {
+			if (e.affectsConfiguration("airship")) {
+				configurePlugin(api);
+				updateStatusButtonVisibility();
+			}
+		},
+		undefined,
+		context.subscriptions,
+	);
 
 	// Enable airship.openOutput whenever in source directory.
-	vscode.window.onDidChangeActiveTextEditor((e) => {
-		if (e) {
-			vscode.commands.executeCommand('setContext', 'airship:inSrcDir', isPathInSrc(e.document.fileName));
-		}
-	}, undefined, context.subscriptions);
+	vscode.window.onDidChangeActiveTextEditor(
+		(e) => {
+			if (e) {
+				const isInSrc = isPathInSrc(e.document.fileName);
+				vscode.commands.executeCommand("setContext", "airship:inSrcDir", isInSrc);
+			}
+		},
+		undefined,
+		context.subscriptions,
+	);
 
 	// Find and open output file.
 	const openOutput = () => {
@@ -57,9 +66,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		const [tsconfigPath, compilerOptions] = result;
 		if (!compilerOptions) return showErrorMessage("compilerOptions not found");
 
-		const rootDirs = compilerOptions.rootDirs;
-
-		if (!compilerOptions.rootDirs || !compilerOptions.outDir) return showErrorMessage("rootDirs or outDir not specified");
+		if (!compilerOptions.rootDirs || !compilerOptions.outDir)
+			return showErrorMessage("rootDirs or outDir not specified");
 		if (!isPathInSrc(currentFile, result)) return showErrorMessage("File not in srcDir");
 
 		const basePath = path.dirname(tsconfigPath);
@@ -67,56 +75,58 @@ export async function activate(context: vscode.ExtensionContext) {
 			basePath,
 			path.join(basePath, compilerOptions.outDir),
 			undefined,
-			true
+			true,
 		);
 
 		const outputPath = pathTranslator.getOutputPath(currentFile);
 		console.log("outputPath is ", outputPath);
 		if (!existsSync(outputPath)) return showErrorMessage("Output file could not be found");
 
-		const openToSide = vscode.workspace.getConfiguration('airship').get<boolean>("openOutputToSide", true);
+		const openToSide = vscode.workspace.getConfiguration("airship").get<boolean>("openOutputToSide", true);
 		const viewColumn = openToSide ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active;
-		vscode.workspace.openTextDocument(vscode.Uri.file(outputPath))
-			.then(document => vscode.window.showTextDocument(document, viewColumn));
+		vscode.workspace
+			.openTextDocument(vscode.Uri.file(outputPath))
+			.then((document) => vscode.window.showTextDocument(document, viewColumn));
 	};
 
 	const outputChannel = new VirtualTerminal("airship");
 
-	const statusBarItem = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Right,
-		500
-	);
+	const compileStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
 
 	const statusBarDefaultState = () => {
-		statusBarItem.text = "$(debug-start)  Run Airship TS Compiler";
-		statusBarItem.command = "airship.start";
+		compileStatusBarItem.text = "$(debug-start)  Run Airship TS Compiler";
+		compileStatusBarItem.command = "airship.start";
 	};
 
 	const updateStatusButtonVisibility = () => {
-		if (vscode.workspace.getConfiguration('airship.command.status').get('show', true)) {
-			statusBarItem.show();
+		if (vscode.workspace.getConfiguration("airship.command.status").get("show", true)) {
+			compileStatusBarItem.show();
 		} else {
-			statusBarItem.hide();
+			compileStatusBarItem.hide();
 		}
 	};
 
 	let compilerProcess: childProcess.ChildProcessWithoutNullStreams;
 	let compilerPendingExit = false;
-	const startCompiler = async() => {
-		statusBarItem.text = "$(debug-stop) Stop Airship TS Compiler";
-		statusBarItem.command = "airship.stop";
+	const startCompiler = async () => {
+		compileStatusBarItem.text = "$(debug-stop) Stop Airship TS Compiler";
+		compileStatusBarItem.command = "airship.stop";
 
 		if (!vscode.workspace.workspaceFolders) return showErrorMessage("Not in a workspace");
 
 		outputChannel.show();
-		outputChannel.appendLine("Starting compiler..");
+		outputChannel.appendLine("Starting TypeScript Compiler...");
 
 		const commandConfiguration = vscode.workspace.getConfiguration("airship.command");
-		const parameters = commandConfiguration.get<Array<string>>("parameters", ["build", "--watch", "--writeOnlyChanged"]);
+		const parameters = commandConfiguration.get<Array<string>>("parameters", [
+			"build",
+			"--watch",
+			"--writeOnlyChanged",
+		]);
 		const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 		const options = {
 			cwd: workspacePath.toString(),
-			shell: true
+			shell: true,
 		};
 
 		const development = commandConfiguration.get("development", false);
@@ -125,7 +135,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Detect if there is a local install
 		const localInstall = path.join(workspacePath, "node_modules", ".bin", "utsc");
 
-		vscode.commands.executeCommand('setContext', 'airship:compilerActive', true);
+		vscode.commands.executeCommand("setContext", "airship:compilerActive", true);
 		if (!development && fs.existsSync(localInstall)) {
 			outputChannel.appendLine("Detected local install, using local install instead of global");
 			compilerProcess = childProcess.spawn(`"${localInstall.replaceAll(/"/g, '\\"')}"`, parameters, options);
@@ -133,20 +143,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			compilerProcess = childProcess.spawn(compilerCommand, parameters, options);
 		}
 
-		compilerProcess.on("error", error => {
+		compilerProcess.on("error", (error) => {
 			const errorMessage = `Error while starting compiler: ${error.message}`;
 			showErrorMessage(errorMessage);
 			outputChannel.appendLine(errorMessage);
 		});
 
-		compilerProcess.stdout.on("data", chunk => outputChannel.append(chunk.toString()));
-		compilerProcess.stderr.on("data", chunk => outputChannel.append(chunk.toString()));
+		compilerProcess.stdout.on("data", (chunk) => outputChannel.append(chunk.toString()));
+		compilerProcess.stderr.on("data", (chunk) => outputChannel.append(chunk.toString()));
 
-		compilerProcess.on("exit", exitCode => {
-			vscode.commands.executeCommand('setContext', 'airship:compilerActive', false);
+		compilerProcess.on("exit", (exitCode) => {
+			vscode.commands.executeCommand("setContext", "airship:compilerActive", false);
 
 			if (exitCode && !compilerPendingExit) {
-				vscode.window.showErrorMessage("Compiler did not exit successfully.", "Show Output").then(choice => {
+				vscode.window.showErrorMessage("Compiler did not exit successfully.", "Show Output").then((choice) => {
 					if (!choice) return;
 
 					outputChannel.show();
@@ -160,15 +170,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 	};
 
-	const stopCompiler = async() => {
-		outputChannel.appendLine("Stopping compiler..");
+	const stopCompiler = async () => {
+		outputChannel.appendLine("Stopping TypeScript Compiler ...");
 		compilerPendingExit = true;
 
 		treeKill(compilerProcess.pid);
 	};
 
 	outputChannel.onClose(() => {
-		if (statusBarItem.command === "airship.stop") {
+		if (compileStatusBarItem.command === "airship.stop") {
 			stopCompiler();
 		}
 	});
@@ -178,21 +188,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("airship.start", startCompiler));
 	context.subscriptions.push(vscode.commands.registerCommand("airship.stop", stopCompiler));
 
-	context.subscriptions.push(statusBarItem);
+	context.subscriptions.push(compileStatusBarItem);
 	context.subscriptions.push(outputChannel);
 
 	const colorConfiguration = vscode.workspace.getConfiguration("airship.colorPicker");
 	if (colorConfiguration.get("enabled", true)) {
-		makeColorProvider().forEach(provider => context.subscriptions.push(provider));
+		makeColorProvider().forEach((provider) => context.subscriptions.push(provider));
 	}
 
 	statusBarDefaultState();
 	updateStatusButtonVisibility();
 
-	vscode.commands.executeCommand('setContext', 'airship:inSrcDir', vscode.window.activeTextEditor?.document.uri.fsPath ?? false);
-	vscode.commands.executeCommand('setContext', 'airship:compilerActive', false);
+	vscode.commands.executeCommand(
+		"setContext",
+		"airship:inSrcDir",
+		vscode.window.activeTextEditor?.document.uri.fsPath ?? false,
+	);
+	vscode.commands.executeCommand("setContext", "airship:compilerActive", false);
 
-	console.log('airship extensions has loaded');
+	console.log("airship extensions has loaded");
 }
 
 export function configurePlugin(api: any) {
@@ -201,12 +215,12 @@ export function configurePlugin(api: any) {
 	const paths = vscode.workspace.getConfiguration("airship.boundary.paths");
 
 	// Updates the settings that the language service plugin uses.
-	api.configurePlugin("airship-extensions", {
+	api.configurePlugin("airship-typescript-extensions", {
 		mode: boundary.get("mode"),
 		// useRojo: boundary.get("useRojo"),
 		// server: paths.get("serverPaths"),
 		// client: paths.get("clientPaths"),
-		hideDeprecated: editor.get("hideDeprecated")
+		hideDeprecated: editor.get("hideDeprecated"),
 	});
 }
 

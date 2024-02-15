@@ -13,7 +13,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/easy-games/airship-extensions"
+		"url": "https://github.com/easy-games/airship-vscode"
 	},
 	"main": "./out/extension.js",
 	"activationEvents": [
@@ -22,25 +22,25 @@
 	"contributes": {
 		"typescriptServerPlugins": [
 			{
-				"name": "airship-extensions",
+				"name": "@easy-games/airship-typescript-extensions",
 				"enableForWorkspaceTypeScriptVersions": true
 			}
 		],
 		"commands": [
 			{
 				"command": "airship.openOutput",
-				"title": "Open Output Path",
-				"category": "airship"
+				"title": "View Compiled Luau Code (Output)",
+				"category": "Airship"
 			},
 			{
 				"command": "airship.start",
 				"title": "Start Compiler",
-				"category": "airship"
+				"category": "Airship"
 			},
 			{
 				"command": "airship.stop",
 				"title": "Stop Compiler",
-				"category": "airship"
+				"category": "Airship"
 			}
 		],
 		"menus": {
@@ -60,7 +60,7 @@
 			]
 		},
 		"configuration": {
-			"title": "airship",
+			"title": "Airship",
 			"properties": {
 				"airship.editor.hideDeprecated": {
 					"type": "boolean",
@@ -69,7 +69,7 @@
 				},
 				"airship.boundary.mode": {
 					"type": "string",
-					"default": "remove",
+					"default": "prefix",
 					"enum": [
 						"remove",
 						"prefix"

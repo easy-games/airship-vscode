@@ -10,7 +10,7 @@ export function isPathInSrc(fileName: string, compilerOptionsResult?: [string, t
 			for (const rootDir of compilerOptions.rootDirs) {
 				const srcRelative = path.join(path.dirname(tsconfigPath), rootDir);
 				const isInSrc = !path.relative(srcRelative, fileName).startsWith('.');
-				console.log("is in src", srcRelative, isInSrc);
+
 				if (isInSrc) return true;
 			}
 
