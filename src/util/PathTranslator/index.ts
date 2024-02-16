@@ -45,26 +45,12 @@ export class PathTranslator {
 		const makeRelative = this.makeRelativeFactory();
 		filePath = path.join(filePath);
 
-		//if (this.projectOptions.type !== ProjectType.AirshipBundle) {
 		if (filePath.includes(path.join("src", "Shared"))) {
 			filePath = filePath.replace(path.join("src/Shared"), path.join("Shared/Resources/TS"));
 		} else if (filePath.includes(path.join("src/Server"))) {
 			filePath = filePath.replace(path.join("src/Server"), path.join("Server/Resources/TS"));
 		} else if (filePath.includes(path.join("src/Client"))) {
 			filePath = filePath.replace(path.join("src/Client"), path.join("Client/Resources/TS"));
-		}
-		//}
-
-		let hasImports = false;
-		if (filePath.includes(path.join("@"))) {
-			hasImports = true;
-			if (filePath.includes(path.join("/Shared"))) {
-				filePath = filePath.replace(path.join("/Shared"), path.join("/Shared/Resources/TS"));
-			} else if (filePath.includes(path.join("/Server"))) {
-				filePath = filePath.replace(path.join("/Server"), path.join("/Server/Resources/TS"));
-			} else if (filePath.includes(path.join("/Client"))) {
-				filePath = filePath.replace(path.join("/Client"), path.join("/Client/Resources/TS"));
-			}
 		}
 
 		const pathInfo = PathInfo.from(filePath);

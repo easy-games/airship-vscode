@@ -67,7 +67,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const [tsconfigPath, compilerOptions] = result;
 		if (!compilerOptions) return showErrorMessage("compilerOptions not found");
 
-		if (!compilerOptions.rootDirs || !compilerOptions.outDir)
+		if ((!compilerOptions.rootDirs && !compilerOptions.rootDir) || !compilerOptions.outDir)
 			return showErrorMessage("rootDirs or outDir not specified");
 		if (!isPathInSrc(currentFile, result)) return showErrorMessage("File not in srcDir");
 
@@ -80,7 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		);
 
 		const outputPath = pathTranslator.getOutputPath(currentFile);
-		console.log("outputPath is ", outputPath);
+		console.log("outputPath is ", outputPath, "from base path", basePath);
 		if (!existsSync(outputPath)) return showErrorMessage("Output file could not be found");
 
 		const openToSide = vscode.workspace.getConfiguration("airship").get<boolean>("openOutputToSide", true);
