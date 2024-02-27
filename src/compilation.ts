@@ -41,6 +41,8 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 					}
 				}
 			});
+
+			terminals.set(workspace, terminal);
 		}
 
 		return terminal;
@@ -62,7 +64,15 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 	};
 
 	const updateStatusButtonVisibility = () => {
-		if (vscode.workspace.getConfiguration("airship.command.status").get("show", true)) {
+		const canCompileCode =
+			workspaceFolderCount === 1 ||
+			(vscode.workspace.workspaceFolders?.some((f) => {
+				const hasCompiler = fs.existsSync(path.join(f.uri.fsPath, "node_modules", ".bin", "utsc"));
+				return !activeCompilers.has(f) && hasCompiler;
+			}) ??
+				false);
+
+		if (vscode.workspace.getConfiguration("airship.command.status").get("show", true) && canCompileCode) {
 			compileStatusBarItem.show();
 		} else {
 			compileStatusBarItem.hide();
@@ -79,7 +89,9 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 		if (workspaces.length > 1) {
 			const items = new Array<WorkspacePickItem>();
 			for (const workspace of workspaces) {
-				if (!activeCompilers.has(workspace)) {
+				const hasCompiler = fs.existsSync(path.join(workspace.uri.fsPath, "node_modules", ".bin", "utsc"));
+
+				if (hasCompiler && !activeCompilers.has(workspace)) {
 					items.push({
 						label: `$(folder) ${workspace.name}`,
 						description: workspace.uri.fsPath,
@@ -95,6 +107,15 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 					detail: "Run the TypeScript compiler for all workspaces",
 					workspace: undefined,
 				});
+			} else {
+				items.unshift({
+					label: "$(error) No available workspaces, or all projects already running",
+					workspace: undefined,
+				});
+			}
+
+			if (items.length === 0) {
+				return;
 			}
 
 			const result = await vscode.window.showQuickPick(items);
@@ -111,7 +132,12 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			compileStatusBarItem.color = new vscode.ThemeColor("terminal.ansiRed");
 		}
 
-		for (const workspace of workspaces.filter((workspace) => !activeCompilers.has(workspace))) {
+		for (const workspace of workspaces) {
+			if (activeCompilers.has(workspace)) continue;
+
+			const hasCompiler = fs.existsSync(path.join(workspace.uri.fsPath, "node_modules", ".bin", "utsc"));
+			if (!hasCompiler) continue;
+
 			startCompiler(workspace);
 		}
 	};
@@ -194,10 +220,11 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			}
 
 			outputChannel.appendLine(`Compiler exited with code ${exitCode ?? 0}`);
-			statusBarDefaultState();
+			updateStatusButtonVisibility();
 		});
 
 		state.compilerProcess = compilerProcess;
+		updateStatusButtonVisibility();
 	};
 
 	const stopCompilers = async (workspace?: vscode.WorkspaceFolder) => {
@@ -212,6 +239,7 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			}
 
 			activeCompilers.delete(workspace);
+			updateStatusButtonVisibility();
 		} else {
 			for (const [, compiler] of activeCompilers) {
 				if (!compiler.compilerProcess) continue;
@@ -220,14 +248,9 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			}
 
 			activeCompilers.clear();
+			statusBarDefaultState();
 		}
 	};
-
-	// outputChannel.onClose(() => {
-	// 	if (compileStatusBarItem.command === "airship.stop") {
-	// 		stopCompilers();
-	// 	}
-	// });
 
 	statusBarDefaultState();
 	updateStatusButtonVisibility();

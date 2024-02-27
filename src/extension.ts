@@ -1,17 +1,12 @@
-import * as childProcess from "child_process";
-import * as fs from "fs";
 import { existsSync } from "fs";
 import * as path from "path";
-import * as treeKill from "tree-kill";
 import * as vscode from "vscode";
 import { makeColorProvider } from "./colorizePrint";
 import { getCompilerOptionsAtFile } from "./util/compilerOptions";
 import { isPathInSrc } from "./util/isPathInSrc";
 import { PathTranslator } from "./util/PathTranslator";
 import { showErrorMessage } from "./util/showMessage";
-import { VirtualTerminal } from "./VirtualTerminal";
 import { registerAirshipComponentFeatures } from "./airshipComponents";
-import { decoratorHint } from "./airshipComponentInfo";
 import { registerCompilerRuntime } from "./compilation";
 
 export async function activate(context: vscode.ExtensionContext) {
