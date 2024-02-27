@@ -11,6 +11,8 @@ import { PathTranslator } from "./util/PathTranslator";
 import { showErrorMessage } from "./util/showMessage";
 import { VirtualTerminal } from "./VirtualTerminal";
 import { registerAirshipComponentFeatures } from "./airshipComponents";
+import { decoratorHint } from "./airshipComponentInfo";
+import { registerCompilerRuntime } from "./compilation";
 
 export async function activate(context: vscode.ExtensionContext) {
 	// Retrieve a reference to vscode's typescript extension.
@@ -37,7 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		(e) => {
 			if (e.affectsConfiguration("airship")) {
 				configurePlugin(api);
-				updateStatusButtonVisibility();
+				// updateStatusButtonVisibility();
 			}
 		},
 		undefined,
@@ -90,116 +92,19 @@ export async function activate(context: vscode.ExtensionContext) {
 			.then((document) => vscode.window.showTextDocument(document, viewColumn));
 	};
 
-	const outputChannel = new VirtualTerminal("airship");
-
-	const compileStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
-
-	const statusBarDefaultState = () => {
-		compileStatusBarItem.text = "$(debug-start)  Run Airship TS Compiler";
-		compileStatusBarItem.command = "airship.start";
-	};
-
-	const updateStatusButtonVisibility = () => {
-		if (vscode.workspace.getConfiguration("airship.command.status").get("show", true)) {
-			compileStatusBarItem.show();
-		} else {
-			compileStatusBarItem.hide();
-		}
-	};
-
-	let compilerProcess: childProcess.ChildProcessWithoutNullStreams;
-	let compilerPendingExit = false;
-	const startCompiler = async () => {
-		compileStatusBarItem.text = "$(debug-stop) Stop Airship TS Compiler";
-		compileStatusBarItem.command = "airship.stop";
-
-		if (!vscode.workspace.workspaceFolders) return showErrorMessage("Not in a workspace");
-
-		outputChannel.show();
-		outputChannel.appendLine("Starting TypeScript Compiler...");
-
-		const commandConfiguration = vscode.workspace.getConfiguration("airship.command");
-		const parameters = commandConfiguration.get<Array<string>>("parameters", [
-			"build",
-			"--watch",
-			"--writeOnlyChanged",
-		]);
-		const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-		const options = {
-			cwd: workspacePath.toString(),
-			shell: true,
-		};
-
-		const development = commandConfiguration.get("development", false);
-		const compilerCommand = development ? "utsc-dev" : "utsc";
-
-		// Detect if there is a local install
-		const localInstall = path.join(workspacePath, "node_modules", ".bin", "utsc");
-
-		vscode.commands.executeCommand("setContext", "airship:compilerActive", true);
-		if (!development && fs.existsSync(localInstall)) {
-			outputChannel.appendLine("Detected local install, using local install instead of global");
-			compilerProcess = childProcess.spawn(`"${localInstall.replaceAll(/"/g, '\\"')}"`, parameters, options);
-		} else {
-			compilerProcess = childProcess.spawn(compilerCommand, parameters, options);
-		}
-
-		compilerProcess.on("error", (error) => {
-			const errorMessage = `Error while starting compiler: ${error.message}`;
-			showErrorMessage(errorMessage);
-			outputChannel.appendLine(errorMessage);
-		});
-
-		compilerProcess.stdout.on("data", (chunk) => outputChannel.append(chunk.toString()));
-		compilerProcess.stderr.on("data", (chunk) => outputChannel.append(chunk.toString()));
-
-		compilerProcess.on("exit", (exitCode) => {
-			vscode.commands.executeCommand("setContext", "airship:compilerActive", false);
-
-			if (exitCode && !compilerPendingExit) {
-				vscode.window.showErrorMessage("Compiler did not exit successfully.", "Show Output").then((choice) => {
-					if (!choice) return;
-
-					outputChannel.show();
-				});
-			}
-
-			compilerPendingExit = false;
-
-			outputChannel.appendLine(`Compiler exited with code ${exitCode ?? 0}`);
-			statusBarDefaultState();
-		});
-	};
-
-	const stopCompiler = async () => {
-		outputChannel.appendLine("Stopping TypeScript Compiler ...");
-		compilerPendingExit = true;
-
-		if (compilerProcess.pid) treeKill(compilerProcess.pid);
-	};
-
-	outputChannel.onClose(() => {
-		if (compileStatusBarItem.command === "airship.stop") {
-			stopCompiler();
-		}
-	});
 
 	// Register commands.
 	context.subscriptions.push(vscode.commands.registerCommand("airship.openOutput", openOutput));
-	context.subscriptions.push(vscode.commands.registerCommand("airship.start", startCompiler));
-	context.subscriptions.push(vscode.commands.registerCommand("airship.stop", stopCompiler));
 	registerAirshipComponentFeatures(context);
-
-	context.subscriptions.push(compileStatusBarItem);
-	context.subscriptions.push(outputChannel);
 
 	const colorConfiguration = vscode.workspace.getConfiguration("airship.colorPicker");
 	if (colorConfiguration.get("enabled", true)) {
 		makeColorProvider().forEach((provider) => context.subscriptions.push(provider));
 	}
 
-	statusBarDefaultState();
-	updateStatusButtonVisibility();
+	// Compiler Runtime Provider
+	const workspaceCompiler = registerCompilerRuntime(context);
+	context.subscriptions.push(workspaceCompiler);
 
 	vscode.commands.executeCommand(
 		"setContext",

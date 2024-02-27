@@ -30,7 +30,8 @@ export class VirtualTerminal {
 		this.writer.isConnected = false;
 		this.terminal = vscode.window.createTerminal({
 			name,
-			pty
+			pty,
+			iconPath: new vscode.ThemeIcon("debug-alt")
 		});
 	}
 
