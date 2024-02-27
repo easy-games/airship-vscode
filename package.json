@@ -3,7 +3,7 @@
 	"publisher": "easy-games",
 	"displayName": "Airship Editor Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.0.0-beta.4",
+	"version": "1.0.0-beta.5",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "^1.86.0"
@@ -101,6 +101,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Whether to show the status button."
+				},
+				"airship.command.splitMultiCompileTerminals": {
+					"type": "boolean",
+					"default": true,
+					"description": "Use split terminals if multiple terminals are ran in a multi-project workspace"
 				},
 				"airship.command.parameters": {
 					"type": "array",

@@ -1,9 +1,11 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 /**
  * A PseudoTerminal that mimics OutputChannel api.
  */
 export class VirtualTerminal {
+	private static terminals = new Array<vscode.Terminal>();
+
 	private terminal?: vscode.Terminal;
 	private writer = new TrackedEventEmitter<string>();
 	private doClose = new vscode.EventEmitter<void>();
@@ -13,26 +15,41 @@ export class VirtualTerminal {
 
 	constructor(public name: string) {
 		this.onClose(() => {
+			if (this.terminal) VirtualTerminal.terminals.splice(VirtualTerminal.terminals.indexOf(this.terminal), 1);
 			this.terminal = undefined;
 		});
 	}
 
 	private createTerminal(name: string) {
 		if (this.terminal) {
+			VirtualTerminal.terminals.splice(VirtualTerminal.terminals.indexOf(this.terminal), 1);
 			this.terminal.dispose();
 		}
 		const pty = {
 			onDidWrite: this.writer.event,
 			onDidClose: this.doClose.event,
-			open: () => { },
+			open: () => {},
 			close: () => this._close.fire(),
 		};
 		this.writer.isConnected = false;
+		console.log(
+			"virtTerm length",
+			VirtualTerminal.terminals.map((term) => term.name).join(", "),
+			VirtualTerminal.terminals.length > 0 ? VirtualTerminal.terminals[0].name : "<none>",
+		);
 		this.terminal = vscode.window.createTerminal({
 			name,
 			pty,
-			iconPath: new vscode.ThemeIcon("debug-alt")
+			iconPath: new vscode.ThemeIcon("debug-alt"),
+			location:
+				VirtualTerminal.terminals.length > 0 &&
+				vscode.workspace.getConfiguration("airship.command").get("splitMultiCompileTerminals")
+					? {
+							parentTerminal: VirtualTerminal.terminals[VirtualTerminal.length - 1],
+					  }
+					: undefined,
 		});
+		VirtualTerminal.terminals.push(this.terminal);
 	}
 
 	/**
@@ -88,14 +105,14 @@ class TrackedEventEmitter<T> extends vscode.EventEmitter<T> {
 	constructor() {
 		super();
 		const originalEvent = this.event;
-		Object.defineProperty(this, 'event', {
+		Object.defineProperty(this, "event", {
 			value: (listener: any, thisArgs?: any, disposables?: any) => {
 				const disposable = originalEvent(listener, thisArgs, disposables);
 				this.isConnected = true;
-				this.values.forEach(v => this.fire(v));
+				this.values.forEach((v) => this.fire(v));
 				this.values = [];
 				return disposable;
-			}
+			},
 		});
 	}
 
