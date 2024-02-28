@@ -68,12 +68,10 @@
 					"when": "airship:inSrcDir"
 				},
 				{
-					"command": "airship.start",
-					"when": "!airship:compilerActive"
+					"command": "airship.start"
 				},
 				{
-					"command": "airship.stop",
-					"when": "airship:compilerActive"
+					"command": "airship.stop"
 				}
 			]
 		},

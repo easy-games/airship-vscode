@@ -227,24 +227,27 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 		updateStatusButtonVisibility();
 	};
 
+	const cleanupCompiler = (activeCompiler: ActiveCompilerState) => {
+		activeCompiler.pendingExit = true;
+		activeCompiler?.statusBarItem?.dispose();
+
+		if (activeCompiler.compilerProcess) {
+			treeKill(activeCompiler.compilerProcess.pid);
+		}
+
+		activeCompilers.delete(activeCompiler.workspace);
+		updateStatusButtonVisibility();
+	};
+
 	const stopCompilers = async (workspace?: vscode.WorkspaceFolder) => {
 		if (workspace) {
 			const activeCompiler = activeCompilers.get(workspace);
 			if (!activeCompiler) return;
-			activeCompiler.pendingExit = true;
-			activeCompiler?.statusBarItem?.dispose();
 
-			if (activeCompiler.compilerProcess) {
-				treeKill(activeCompiler.compilerProcess.pid);
-			}
-
-			activeCompilers.delete(workspace);
-			updateStatusButtonVisibility();
+			cleanupCompiler(activeCompiler);
 		} else {
 			for (const [, compiler] of activeCompilers) {
-				if (!compiler.compilerProcess) continue;
-				compiler.pendingExit = true;
-				treeKill(compiler.compilerProcess.pid);
+				cleanupCompiler(compiler);
 			}
 
 			activeCompilers.clear();

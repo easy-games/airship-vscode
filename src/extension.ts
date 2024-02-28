@@ -117,7 +117,7 @@ export function configurePlugin(api: any) {
 	const paths = vscode.workspace.getConfiguration("airship.boundary.paths");
 
 	// Updates the settings that the language service plugin uses.
-	api.configurePlugin("airship-typescript-extensions", {
+	api.configurePlugin("@easy-games/airship-typescript-extensions", {
 		mode: boundary.get("mode"),
 		// useRojo: boundary.get("useRojo"),
 		// server: paths.get("serverPaths"),
