@@ -32,11 +32,6 @@ export class VirtualTerminal {
 			close: () => this._close.fire(),
 		};
 		this.writer.isConnected = false;
-		console.log(
-			"virtTerm length",
-			VirtualTerminal.terminals.map((term) => term.name).join(", "),
-			VirtualTerminal.terminals.length > 0 ? VirtualTerminal.terminals[0].name : "<none>",
-		);
 		this.terminal = vscode.window.createTerminal({
 			name,
 			pty,
