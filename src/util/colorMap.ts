@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as chroma from "chroma-js";
+import chroma from "chroma-js";
 import * as vscode from "vscode";
 
 export enum ColorType {
