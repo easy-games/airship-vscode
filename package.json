@@ -3,7 +3,7 @@
 	"publisher": "easy-games",
 	"displayName": "Airship Editor Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.0.0-rc.0",
+	"version": "1.0.0-rc.1",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "^1.86.0"
@@ -110,7 +110,8 @@
 					"default": [
 						"build",
 						"--watch",
-						"--writeOnlyChanged"
+						"--writeOnlyChanged",
+						"--verbose"
 					],
 					"items": {
 						"type": "string"

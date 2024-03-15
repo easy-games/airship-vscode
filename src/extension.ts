@@ -34,7 +34,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		(e) => {
 			if (e.affectsConfiguration("airship")) {
 				configurePlugin(api);
-				// updateStatusButtonVisibility();
 			}
 		},
 		undefined,

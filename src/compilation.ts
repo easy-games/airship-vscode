@@ -16,11 +16,19 @@ interface ActiveCompilerState {
 	readonly terminal: VirtualTerminal;
 	compilerProcess?: childProcess.ChildProcessWithoutNullStreams;
 	statusBarItem?: vscode.StatusBarItem;
+	isSingleWorkspace: boolean;
 	pendingExit?: true;
 }
 
 interface WorkspacePickItem extends vscode.QuickPickItem {
 	workspace: vscode.WorkspaceFolder | undefined;
+}
+
+function getCompilableWorkspaces(workspaces: readonly vscode.WorkspaceFolder[]): readonly vscode.WorkspaceFolder[] {
+	return workspaces.filter((workspace) => {
+		const isCompilableProject = fs.existsSync(path.join(workspace.uri.fsPath, "node_modules", ".bin", "utsc"));
+		return isCompilableProject;
+	});
 }
 
 export function registerCompilerRuntime(context: vscode.ExtensionContext): WorkspaceCompilerRuntime {
@@ -50,10 +58,10 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 
 	const compileStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
 
-	const workspaceFolderCount = vscode.workspace.workspaceFolders?.length ?? 0;
-
 	const statusBarDefaultState = () => {
-		if (workspaceFolderCount > 1) {
+		const workspaces = getCompilableWorkspaces(vscode.workspace.workspaceFolders ?? []);
+
+		if (workspaces.length > 1) {
 			compileStatusBarItem.text = "$(run-all) Run Airship TS Compiler...";
 		} else {
 			compileStatusBarItem.text = "$(run) Run Airship TS Compiler";
@@ -64,13 +72,8 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 	};
 
 	const updateStatusButtonVisibility = () => {
-		const canCompileCode =
-			workspaceFolderCount === 1 ||
-			(vscode.workspace.workspaceFolders?.some((f) => {
-				const hasCompiler = fs.existsSync(path.join(f.uri.fsPath, "node_modules", ".bin", "utsc"));
-				return !activeCompilers.has(f) && hasCompiler;
-			}) ??
-				false);
+		const compilableWorkspaces = getCompilableWorkspaces(vscode.workspace.workspaceFolders ?? []);
+		const canCompileCode = compilableWorkspaces.length > 0;
 
 		if (vscode.workspace.getConfiguration("airship.command.status").get("show", true) && canCompileCode) {
 			compileStatusBarItem.show();
@@ -79,12 +82,10 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 		}
 	};
 
-	//let compilerProcesses = new Array<childProcess.ChildProcessWithoutNullStreams>();
-	//let compilerPendingExit = false;
-
 	const startCompilers = async (workspaces?: readonly vscode.WorkspaceFolder[]) => {
 		workspaces = workspaces ?? vscode.workspace.workspaceFolders;
 		if (!workspaces) return showErrorMessage("Not in a workspace");
+		workspaces = getCompilableWorkspaces(workspaces);
 
 		if (workspaces.length > 1) {
 			const items = new Array<WorkspacePickItem>();
@@ -126,7 +127,7 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			if (result.workspace) workspaces = [result.workspace];
 		}
 
-		if (workspaceFolderCount === 1) {
+		if (workspaces.length === 1) {
 			compileStatusBarItem.text = "$(debug-stop) Stop Airship TS Compiler";
 			compileStatusBarItem.command = "airship.stop";
 			compileStatusBarItem.color = new vscode.ThemeColor("terminal.ansiRed");
@@ -143,9 +144,13 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 	};
 
 	const startCompiler = async (workspace: vscode.WorkspaceFolder) => {
+		const compilableWorkspaces = getCompilableWorkspaces(vscode.workspace.workspaceFolders ?? []);
+		const workspaceFolderCount = compilableWorkspaces.length;
+
 		let state: ActiveCompilerState = {
 			workspace,
 			terminal: getWorkspaceCompilerTerminal(workspace),
+			isSingleWorkspace: workspaceFolderCount === 1,
 		};
 		activeCompilers.set(workspace, state);
 
@@ -181,6 +186,7 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 			"build",
 			"--watch",
 			"--writeOnlyChanged",
+			"--verbose"
 		]);
 
 		const development = commandConfiguration.get("development", false);
@@ -208,8 +214,6 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 		compilerProcess.stderr.on("data", (chunk) => outputChannel.append(chunk.toString()));
 
 		compilerProcess.on("exit", (exitCode) => {
-			// vscode.commands.executeCommand("setContext", "airship:compilerActive", false);
-
 			if (exitCode && !state.pendingExit) {
 				stopCompilers(state.workspace);
 
@@ -229,7 +233,14 @@ export function registerCompilerRuntime(context: vscode.ExtensionContext): Works
 
 	const cleanupCompiler = (activeCompiler: ActiveCompilerState) => {
 		activeCompiler.pendingExit = true;
-		activeCompiler?.statusBarItem?.dispose();
+
+		if (activeCompiler.isSingleWorkspace) {
+			statusBarDefaultState();
+		}
+		
+		if (activeCompiler.statusBarItem) {
+			activeCompiler.statusBarItem.dispose();
+		}
 
 		if (activeCompiler.compilerProcess) {
 			treeKill(activeCompiler.compilerProcess.pid);
