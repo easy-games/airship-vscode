@@ -28,7 +28,7 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="2.71877"
-     inkscape:cx="-104.64291"
+     inkscape:cx="-139.21737"
      inkscape:cy="25.746937"
      inkscape:window-width="3440"
      inkscape:window-height="1369"
@@ -42,17 +42,10 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <text
-       xml:space="preserve"
+    <path
+       id="text1402"
        style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-size:16.6329px;font-family:Oxanium;-inkscape-font-specification:'Oxanium Ultra-Bold';text-align:end;text-anchor:end;fill:#ffffff;stroke-width:0.346518;paint-order:stroke markers fill"
-       x="32.86076"
-       y="31.681179"
-       id="text1402"><tspan
-         sodipodi:role="line"
-         id="tspan1400"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Oxanium;-inkscape-font-specification:'Oxanium Bold';fill:#ffffff;stroke-width:0.346518"
-         x="32.86076"
-         y="31.681179">LUA</tspan></text>
+       d="M 2.4556641 20.204451 L 2.4556641 31.68127 L 9.8076701 31.68127 L 9.8076701 29.519128 L 4.8508667 29.519128 L 4.8508667 20.204451 L 2.4556641 20.204451 z M 11.470618 20.204451 L 11.470618 28.886609 C 11.470618 30.749492 12.402396 31.68127 14.265279 31.68127 L 17.725016 31.68127 C 19.587899 31.68127 20.519161 30.749492 20.519161 28.886609 L 20.519161 20.204451 L 18.123958 20.204451 L 18.123958 29.019934 C 18.123958 29.352592 17.957938 29.519128 17.625281 29.519128 L 14.365015 29.519128 C 14.032357 29.519128 13.86582 29.352592 13.86582 29.019934 L 13.86582 20.204451 L 11.470618 20.204451 z M 25.492501 20.204451 L 22.08289 31.232202 L 22.382096 31.68127 L 24.37784 31.68127 L 25.076506 29.35273 L 29.567187 29.35273 L 30.265853 31.68127 L 32.262113 31.68127 L 32.56132 31.232202 L 29.151709 20.204451 L 25.492501 20.204451 z M 27.189038 22.366593 L 27.455172 22.366593 L 28.918648 27.190072 L 25.725045 27.190072 L 27.189038 22.366593 z " />
     <path
        id="path1529"
        style="fill:#ffffff;stroke-width:0.529167;paint-order:stroke markers fill"
