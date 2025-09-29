@@ -1,5 +1,5 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-export function showErrorMessage(message: string) {
-	vscode.window.showErrorMessage(message);
+export function showErrorMessage(message: string, modal = false, modalDetail?: string) {
+	vscode.window.showErrorMessage(message, { modal, detail: modalDetail });
 }

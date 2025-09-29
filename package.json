@@ -1,12 +1,12 @@
 {
 	"name": "airship-vscode",
 	"publisher": "easy-games",
-	"displayName": "Airship Editor Extension",
+	"displayName": "Airship Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.0.0-rc.1",
+	"version": "1.0.0-rc.3",
 	"icon": "icon.png",
 	"engines": {
-		"vscode": "^1.86.0"
+		"vscode": "^1.103.2"
 	},
 	"categories": [
 		"Other"
@@ -17,9 +17,25 @@
 	},
 	"main": "./dist/extension.js",
 	"activationEvents": [
-		"workspaceContains:node_modules/@easy-games/unity-ts"
+		"workspaceContains:AirshipPackages/@Easy/Core"
 	],
 	"contributes": {
+		"semanticTokenScopes": [
+			{
+				"language": "typescript",
+				"scopes": {
+					"macro": [
+						"keyword.control"
+					]
+				}
+			}
+		],
+		"semanticTokenModifiers": [
+			{
+				"id": "directive",
+				"description": "A directive"
+			}
+		],
 		"typescriptServerPlugins": [
 			{
 				"name": "@easy-games/airship-typescript-extensions",
@@ -35,43 +51,82 @@
 		"commands": [
 			{
 				"command": "airship.openOutput",
-				"title": "View Compiled Luau Code (Output)",
-				"category": "Airship"
+				"title": "View Compiled Luau Code",
+				"category": "Airship",
+				"icon": "images/icons/script.svg"
 			},
 			{
-				"command": "airship.start",
-				"title": "Start Compiler",
-				"category": "Airship"
+				"command": "airship.openPublishedOutputServer",
+				"title": "View Published Server Code",
+				"category": "Airship",
+				"icon": "images/icons/script.svg"
 			},
 			{
-				"command": "airship.stop",
-				"title": "Stop Compiler",
-				"category": "Airship"
+				"command": "airship.openPublishedOutputClient",
+				"title": "View Published Client Code",
+				"category": "Airship",
+				"icon": "images/icons/script.svg"
 			},
 			{
 				"command": "airship.create-component",
-				"title": "New Airship Component...",
+				"title": "Create New Behaviour...",
+				"category": "Airship"
+			},
+			{
+				"command": "airship.create-singleton",
+				"title": "Create New Singleton...",
 				"category": "Airship"
 			}
 		],
+		"submenus": [
+			{
+				"id": "airship.create",
+				"label": "Airship",
+				"icon": "$(file-code)"
+			},
+			{
+				"id": "airship.sourceFile",
+				"label": "Airship",
+				"icon": "$(file-code)"
+			}
+		],
 		"menus": {
+			"editor/title": [
+				{
+					"command": "airship.openOutput",
+					"when": "airship:isSourceFile",
+					"group": "navigation@1"
+				}
+			],
 			"explorer/context": [
 				{
-					"command": "airship.create-component",
-					"when": "explorerResourceIsFolder && resourceDirname =~ /src/i",
-					"group": "Airship"
+					"submenu": "airship.create",
+					"when": "explorerResourceIsFolder && !(resourcePath =~ /TypeScript~/is)",
+					"group": "1_Airship"
+				},
+				{
+					"submenu": "airship.sourceFile",
+					"when": "!explorerResourceIsFolder && resourceExtname == .ts && !(resourcePath =~ /TypeScript~/is)",
+					"group": "1_Airship"
+				}
+			],
+			"airship.sourceFile": [
+				{
+					"command": "airship.openOutput"
+				}
+			],
+			"airship.create": [
+				{
+					"command": "airship.create-component"
+				},
+				{
+					"command": "airship.create-singleton"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "airship.openOutput",
 					"when": "airship:inSrcDir"
-				},
-				{
-					"command": "airship.start"
-				},
-				{
-					"command": "airship.stop"
 				}
 			]
 		},
@@ -82,46 +137,6 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Hide deprecated members from intellisense."
-				},
-				"airship.boundary.mode": {
-					"type": "string",
-					"default": "prefix",
-					"enum": [
-						"remove",
-						"prefix"
-					],
-					"enumDescriptions": [
-						"Remove cross-boundary imports from intellisense.",
-						"Prefix cross-boundary imports with their boundary."
-					]
-				},
-				"airship.command.status.show": {
-					"type": "boolean",
-					"default": true,
-					"description": "Whether to show the status button."
-				},
-				"airship.command.splitMultiCompileTerminals": {
-					"type": "boolean",
-					"default": true,
-					"description": "Use split terminals if multiple terminals are ran in a multi-project workspace"
-				},
-				"airship.command.parameters": {
-					"type": "array",
-					"default": [
-						"build",
-						"--watch",
-						"--writeOnlyChanged",
-						"--verbose"
-					],
-					"items": {
-						"type": "string"
-					},
-					"description": "The parameters to be passed into the command triggered from the status bar."
-				},
-				"airship.command.development": {
-					"type": "boolean",
-					"default": false,
-					"description": "If enabled, this will use utsc-dev instead of utsc."
 				},
 				"airship.colorPicker.enabled": {
 					"type": "boolean",
@@ -157,15 +172,16 @@
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch"
+		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+		"package": "vsce package"
 	},
 	"devDependencies": {
 		"@types/chroma-js": "^2.1.3",
 		"@types/glob": "^7.1.3",
 		"@types/mocha": "^8.0.4",
 		"@types/node": "^12.20.1",
-		"@types/ts-expose-internals": "npm:ts-expose-internals@=5.1.6",
-		"@types/vscode": "^1.86.0",
+		"@types/ts-expose-internals": "npm:ts-expose-internals@=5.5.2",
+		"@types/vscode": "^1.103.2",
 		"@typescript-eslint/eslint-plugin": "^4.13.0",
 		"@typescript-eslint/parser": "^4.13.0",
 		"esbuild": "^0.20.2",
@@ -179,6 +195,6 @@
 		"chroma-js": "^2.1.1",
 		"roblox-ts-extensions": "^1.7.2",
 		"tree-kill": "^1.2.2",
-		"typescript": "=5.1.6"
+		"typescript": "=5.5.2"
 	}
 }

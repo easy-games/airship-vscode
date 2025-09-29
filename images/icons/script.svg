@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="128"
+   height="128"
+   viewBox="0 0 33.866666 33.866667"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   sodipodi:docname="script.svg"
+   inkscape:export-filename="script.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="2.71877"
+     inkscape:cx="-104.64291"
+     inkscape:cy="25.746937"
+     inkscape:window-width="3440"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-size:16.6329px;font-family:Oxanium;-inkscape-font-specification:'Oxanium Ultra-Bold';text-align:end;text-anchor:end;fill:#ffffff;stroke-width:0.346518;paint-order:stroke markers fill"
+       x="32.86076"
+       y="31.681179"
+       id="text1402"><tspan
+         sodipodi:role="line"
+         id="tspan1400"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Oxanium;-inkscape-font-specification:'Oxanium Bold';fill:#ffffff;stroke-width:0.346518"
+         x="32.86076"
+         y="31.681179">LUA</tspan></text>
+    <path
+       id="path1529"
+       style="fill:#ffffff;stroke-width:0.529167;paint-order:stroke markers fill"
+       d="M 12.627136,2.1854881 5.0363852,9.7762388 v 8.3328252 h 1.9461344 v -7.17889 L 13.331486,4.5812075 H 26.884147 V 18.109064 h 1.946134 V 2.1854881 Z"
+       sodipodi:nodetypes="ccccccccccc" />
+    <rect
+       style="fill:#f9f9f9;stroke-width:0.529167;paint-order:stroke markers fill"
+       id="rect1682"
+       width="10.508771"
+       height="1.7514619"
+       x="14.69919"
+       y="6.9164772" />
+    <rect
+       style="fill:#f9f9f9;stroke-width:0.640559;paint-order:stroke markers fill"
+       id="rect1682-6"
+       width="15.39874"
+       height="1.7514619"
+       x="9.8092213"
+       y="10.799293" />
+    <rect
+       style="fill:#f9f9f9;stroke-width:0.640559;paint-order:stroke markers fill"
+       id="rect1682-6-9"
+       width="15.39874"
+       height="1.7514619"
+       x="9.8092213"
+       y="14.682109" />
+  </g>
+</svg>

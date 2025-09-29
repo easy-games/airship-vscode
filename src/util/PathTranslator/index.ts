@@ -1,5 +1,5 @@
 import * as path from "path";
-import { D_EXT, INDEX_NAME, INIT_NAME, LUA_EXT, TSX_EXT, TS_EXT } from "./constants";
+import { BEHAVIOUR_METATADA_EXT, D_EXT, INDEX_NAME, INIT_NAME, LUA_EXT, TSX_EXT, TS_EXT } from "./constants";
 import { assert } from "./assert";
 
 class PathInfo {
@@ -9,7 +9,7 @@ class PathInfo {
 		const dirName = path.dirname(filePath);
 		const parts = filePath.slice(dirName.length + path.sep.length).split(".");
 		const fileName = parts.shift()!;
-		const exts = parts.map(v => "." + v);
+		const exts = parts.map((v) => "." + v);
 		assert(fileName !== undefined);
 		return new PathInfo(dirName, fileName, exts);
 	}
@@ -45,29 +45,34 @@ export class PathTranslator {
 		const makeRelative = this.makeRelativeFactory();
 		filePath = path.join(filePath);
 
-		if (filePath.includes(path.join("src", "Shared"))) {
-			filePath = filePath.replace(path.join("src/Shared"), path.join("Shared/Resources/TS"));
-		} else if (filePath.includes(path.join("src/Server"))) {
-			filePath = filePath.replace(path.join("src/Server"), path.join("Server/Resources/TS"));
-		} else if (filePath.includes(path.join("src/Client"))) {
-			filePath = filePath.replace(path.join("src/Client"), path.join("Client/Resources/TS"));
+		const pathInfo = PathInfo.from(filePath);
+
+		if ((pathInfo.extsPeek() === TS_EXT || pathInfo.extsPeek() === TSX_EXT) && pathInfo.extsPeek(1) !== D_EXT) {
+			pathInfo.exts.pop(); // pop .tsx?
+
+			pathInfo.exts.push(LUA_EXT);
 		}
+
+		let relative = makeRelative(pathInfo);
+		return relative;
+	}
+
+	/**
+	 * Maps an input path to an output path
+	 * - `.tsx?` && !`.d.tsx?` -> `.lua`
+	 * 	- `index` -> `init`
+	 * - `src/*` -> `out/*`
+	 */
+	public getOutputMetadataPath(filePath: string) {
+		const makeRelative = this.makeRelativeFactory();
+		filePath = path.join(filePath);
 
 		const pathInfo = PathInfo.from(filePath);
 
-		if (
-			(pathInfo.extsPeek() === TS_EXT ||
-				pathInfo.extsPeek() === TSX_EXT) &&
-			pathInfo.extsPeek(1) !== D_EXT
-		) {
+		if ((pathInfo.extsPeek() === TS_EXT || pathInfo.extsPeek() === TSX_EXT) && pathInfo.extsPeek(1) !== D_EXT) {
 			pathInfo.exts.pop(); // pop .tsx?
 
-			// index -> init
-			if (pathInfo.fileName === INDEX_NAME) {
-				pathInfo.fileName = INIT_NAME;
-			}
-
-			pathInfo.exts.push(LUA_EXT);
+			pathInfo.exts.push(BEHAVIOUR_METATADA_EXT);
 		}
 
 		let relative = makeRelative(pathInfo);
