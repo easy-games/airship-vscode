@@ -7,3 +7,4 @@
 - Allows creating components/singletons via the `Airship > Create New [Behaviour|Singleton]...` right click menus in explorer
 - View the Luau output of TypeScript files by using hte LUAU button on the top right, or the `Airship: View Compiled Luau Code` command
 - Shows methods that are marked as server/client only
+- Shows invalid network boundary usages such as server code called on the client

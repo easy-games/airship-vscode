@@ -1,14 +1,8 @@
-import { existsSync, readFileSync } from "fs";
-import * as path from "path";
 import * as vscode from "vscode";
 import { makeColorProvider } from "./colorizePrint";
-import { getCompilerOptionsAtFile } from "./util/compilerOptions";
 import { isPathInSrc } from "./util/isPathInSrc";
-import { PathTranslator } from "./util/PathTranslator";
-import { showErrorMessage } from "./util/showMessage";
-import { highlightDirectives, registerAirshipComponentFeatures } from "./airshipComponents";
-import { AirshipBehaviourMetadata } from "./types";
-import { getAirshipBehaviourInfo, tryParseSourceFile } from "./tss";
+import { registerAirshipComponentFeatures } from "./airshipComponents";
+import { getAirshipBehaviourInfo } from "./typescript";
 import { createOutputOpenCommand, OpenOutputCommand, openOutputCommand } from "./output";
 import {
 	ExtensionColorConfiguration,
@@ -17,7 +11,7 @@ import {
 	ExtensionEditorConfiguration,
 	ExtensionInternalCommand,
 } from "./commands";
-import ts from "typescript";
+import { nicifyVariableName } from "./util/nicifyVariableName";
 
 interface APIV0 {
 	configurePlugin(pluginId: string, configuration: {}): void;
@@ -73,8 +67,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			openOutputFile.hide();
 		}
 	};
-
-	highlightDirectives();
 
 	// Enable airship.openOutput whenever in source directory.
 	vscode.window.onDidChangeActiveTextEditor(
@@ -134,25 +126,25 @@ export async function activate(context: vscode.ExtensionContext) {
 		updateOpenOutputState();
 	}
 
-	function ncifyName(name: string) {
-		if (name.startsWith("_") || name.startsWith("k")) {
-			name = name.substring(1);
-		}
+	// function ncifyName(name: string) {
+	// 	if (name.startsWith("_") || name.startsWith("k")) {
+	// 		name = name.substring(1);
+	// 	}
 
-		let newStr = "";
-		for (let i = 0; i < name.length; i++) {
-			const charAt = name.at(i);
-			if (i === 0) {
-				newStr += charAt?.toUpperCase();
-			} else if (charAt?.toUpperCase() === charAt) {
-				newStr += " " + charAt;
-			} else if (charAt) {
-				newStr += charAt;
-			}
-		}
+	// 	let newStr = "";
+	// 	for (let i = 0; i < name.length; i++) {
+	// 		const charAt = name.at(i);
+	// 		if (i === 0) {
+	// 			newStr += charAt?.toUpperCase();
+	// 		} else if (charAt?.toUpperCase() === charAt) {
+	// 			newStr += " " + charAt;
+	// 		} else if (charAt) {
+	// 			newStr += charAt;
+	// 		}
+	// 	}
 
-		return newStr;
-	}
+	// 	return newStr;
+	// }
 
 	// const DECLARATION_REGEX = /export default class ([A-z][a-z0-9_]+) extends (AirshipBehaviour|AirshipSingleton)/gi;
 	vscode.languages.registerCodeLensProvider(
@@ -174,13 +166,13 @@ export async function activate(context: vscode.ExtensionContext) {
 					const { textSpan, name } = info.behaviour;
 					const position = document.positionAt(textSpan.start);
 
-					lenses.push(
+					lenses.unshift(
 						new vscode.CodeLens(
 							new vscode.Range(position, document.positionAt(textSpan.start + textSpan.length)),
 							{
 								command: undefined!,
 								tooltip: "",
-								title: `AirshipComponent "${ncifyName(name)}"`,
+								title: `${nicifyVariableName(name)}`,
 							},
 						),
 					);
@@ -195,7 +187,8 @@ export async function activate(context: vscode.ExtensionContext) {
 								new vscode.Range(position, document.positionAt(method.span.start + method.span.length)),
 								{
 									command: undefined!,
-									tooltip: "This method is only available to the server, and will be stripped on the client",
+									tooltip:
+										"This method is only available to the server, and will be stripped on the client",
 									title: `Server-only Method`,
 								},
 							),
@@ -212,7 +205,8 @@ export async function activate(context: vscode.ExtensionContext) {
 								new vscode.Range(position, document.positionAt(method.span.start + method.span.length)),
 								{
 									command: undefined!,
-									tooltip: "This method is only available on the client, and will be stripped on the server.",
+									tooltip:
+										"This method is only available on the client, and will be stripped on the server.",
 									title: `Client-only Method`,
 								},
 							),
@@ -234,19 +228,24 @@ export async function activate(context: vscode.ExtensionContext) {
 	console.log("airship extensions has loaded");
 }
 
+export interface PluginConfig {
+	showCompilerErrors: boolean;
+	networkBoundaryCheck: "off" | "warning";
+	hideDeprecated: boolean;
+	networkBoundaryInfo: boolean;
+}
+
 export function configurePlugin(api: APIV0) {
 	const editor = vscode.workspace.getConfiguration(ExtensionConfiguration.editor);
-	// const boundary = vscode.workspace.getConfiguration("airship.boundary");
-	// const paths = vscode.workspace.getConfiguration("airship.boundary.paths");
+	const networkBoundary = vscode.workspace.getConfiguration(ExtensionConfiguration.networkBoundary);
 
 	// Updates the settings that the language service plugin uses.
 	api.configurePlugin("@easy-games/airship-typescript-extensions", {
-		// mode: boundary.get("mode"),
-		// useRojo: boundary.get("useRojo"),
-		// server: paths.get("serverPaths"),
-		// client: paths.get("clientPaths"),
+		showCompilerErrors: editor.get("showInvalidAirshipTypeScriptErrors"),
+		networkBoundaryInfo: networkBoundary.get("showNetworkBoundary"),
+		networkBoundaryCheck: networkBoundary.get("networkBoundaryCheck"),
 		hideDeprecated: editor.get(ExtensionEditorConfiguration.hideDeprecated),
-	});
+	} satisfies Partial<PluginConfig>);
 }
 
 // this method is called when your extension is deactivated

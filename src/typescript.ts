@@ -1,12 +1,7 @@
 import ts from "typescript";
 import fs from "fs";
 import * as vscode from "vscode";
-import path from "path";
-import { Writable } from "stream";
-
-// export function runTypescriptFancies(uri: vscode.Uri) {
-//    ts.createSourceFile()
-// }
+import { nicifyVariableName } from "./util/nicifyVariableName";
 
 export function tryParseSourceFile(filePath: string, source?: string) {
 	return ts.createSourceFile(filePath, source ?? fs.readFileSync(filePath).toString(), ts.ScriptTarget.ESNext);
@@ -32,7 +27,7 @@ function getExtends(node: ts.ClassDeclaration) {
 }
 
 interface AirshipBehaviourInfo {
-	readonly name: string;
+	name: string;
 	readonly node: ts.ClassDeclaration;
 	readonly textSpan: ts.TextSpan;
 }
@@ -60,6 +55,12 @@ type AirshipContextDecorator = ts.Decorator & {
 type ContextDecoratorName = "Server" | "Client";
 const contextDecorators: ContextDecoratorName[] = ["Server", "Client"];
 
+function getDecorator(expression: ts.CallExpression) {
+	if (ts.isIdentifier(expression.expression)) {
+		return { name: expression.expression.text, arguments: expression.arguments };
+	}
+}
+
 export function getAirshipBehaviourInfo(document: vscode.TextDocument, text = document.getText()): AirshipFile {
 	const source = tryParseSourceFile(document.fileName, text);
 
@@ -68,10 +69,33 @@ export function getAirshipBehaviourInfo(document: vscode.TextDocument, text = do
 	ts.forEachChild(source, (node) => {
 		if (ts.isClassDeclaration(node) && node.name && hasDefaultExport(node)) {
 			const extendsNode = getExtends(node);
-			if (extendsNode && ts.isIdentifier(extendsNode) && extendsNode.text === "AirshipBehaviour") {
+			if (extendsNode && ts.isIdentifier(extendsNode) && (extendsNode.text === "AirshipBehaviour" || extendsNode.text === "AirshipSingleton")) {
 				const textSpan = ts.createTextSpanFromNode(node, source);
 
 				airshipFile.behaviour = { name: node.name.text, node, textSpan };
+
+				if (node.modifiers !== undefined) {
+					for (const modifier of node.modifiers) {
+						if (!ts.isDecorator(modifier) || !ts.isCallExpression(modifier.expression)) continue;
+						const { expression } = modifier;
+						if (!ts.isIdentifier(expression.expression)) continue;
+
+						const decorator = getDecorator(expression);
+						if (decorator?.name === "AirshipComponentMenu") {
+							const [path] = decorator.arguments;
+							if (ts.isStringLiteral(path)) {
+								const parts = path.text.split("/");
+								const last = parts[parts.length - 1];
+
+								if (last) {
+									airshipFile.behaviour.name = nicifyVariableName(parts[parts.length - 1]);
+								} else {
+									airshipFile.behaviour.name += " (Hidden)";
+								}
+							}
+						}
+					}
+				}
 			}
 
 			for (const member of node.members) {

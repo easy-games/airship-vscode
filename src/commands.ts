@@ -10,6 +10,7 @@ export const enum ExtensionCommand {
 export const enum ExtensionConfiguration {
 	colorPicker = "airship.colorPicker",
 	editor = "airship.editor",
+	networkBoundary = "airship.networkBoundary",
 }
 
 export const enum ExtensionColorConfiguration {

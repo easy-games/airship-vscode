@@ -3,7 +3,7 @@
 	"publisher": "vorlias",
 	"displayName": "Airship Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "^1.103.2"
@@ -132,12 +132,17 @@
 			]
 		},
 		"configuration": {
-			"title": "Airship",
+			"title": "Airship TypeScript",
 			"properties": {
 				"airship.editor.hideDeprecated": {
 					"type": "boolean",
 					"default": true,
 					"description": "Hide deprecated members from intellisense."
+				},
+				"airship.editor.showInvalidAirshipTypeScriptErrors": {
+					"type": "boolean",
+					"default": false,
+					"description": "Display errors that are specific to the Airship TypeScript compiler"
 				},
 				"airship.colorPicker.enabled": {
 					"type": "boolean",
@@ -148,6 +153,25 @@
 					"type": "number",
 					"default": 2,
 					"description": "The amount of digits to round to while using the color picker."
+				},
+				"airship.networkBoundary.showNetworkBoundary": {
+					"type": "boolean",
+					"default": true,
+					"description": "Will display network boundary information on suggestions as well as tooltips"
+				},
+				"airship.networkBoundary.networkBoundaryCheck": {
+					"type": "string",
+					"default": "off",
+					"description": "The behaviour to do when a client/server method called in the wrong location is detected. Note: This may be performance heavy currently.",
+					"enum": [
+						"warning",
+						"off"
+					],
+					"enumDescriptions": [
+						"Give errors for improper use of network boundaries",
+						"Give warnings for improper use of network boundaries",
+						"Ignore improper usage of network boundaries"
+					]
 				},
 				"airship.colorPicker.defaultOption": {
 					"type": "string",
@@ -170,8 +194,8 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run esbuild-base --",
-		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+		"vscode:prepublish": "npm run esbuild-base -- --minify",
+		"esbuild-base": "esbuild ./src/extension.ts --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --bundle",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"package": "vsce package"
