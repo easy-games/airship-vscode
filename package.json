@@ -3,7 +3,7 @@
 	"publisher": "vorlias",
 	"displayName": "Airship Extension",
 	"description": "A plugin that extends the capabilities of Airship for vscode",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "^1.103.2"

@@ -126,27 +126,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		updateOpenOutputState();
 	}
 
-	// function ncifyName(name: string) {
-	// 	if (name.startsWith("_") || name.startsWith("k")) {
-	// 		name = name.substring(1);
-	// 	}
-
-	// 	let newStr = "";
-	// 	for (let i = 0; i < name.length; i++) {
-	// 		const charAt = name.at(i);
-	// 		if (i === 0) {
-	// 			newStr += charAt?.toUpperCase();
-	// 		} else if (charAt?.toUpperCase() === charAt) {
-	// 			newStr += " " + charAt;
-	// 		} else if (charAt) {
-	// 			newStr += charAt;
-	// 		}
-	// 	}
-
-	// 	return newStr;
-	// }
-
-	// const DECLARATION_REGEX = /export default class ([A-z][a-z0-9_]+) extends (AirshipBehaviour|AirshipSingleton)/gi;
 	vscode.languages.registerCodeLensProvider(
 		{ language: "typescript", scheme: "file" },
 		new (class implements vscode.CodeLensProvider {
