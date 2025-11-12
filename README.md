@@ -1,5 +1,5 @@
 <div align="center"><img width="128px" src="https://i.imgur.com/FVzCvw3.png"></div>
-<h1 align="center">Airship Visual Studio Code Extension</h1>
+<h1 align="center"><a href="https://airship.gg">Airship</a> Visual Studio Code Extension</h1>
 <div align="center">A visual studio code extension for Airship</div>
 
 # Features
